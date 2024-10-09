@@ -136,6 +136,14 @@ bool _isLoading = true;
               target: _center!,
               zoom: 16.0,
               ),
+              myLocationButtonEnabled: true,
+              myLocationEnabled: true,
+              /*markers: {
+                Marker(markerId: const MarkerId('user_location'),
+                position: _center!,
+                infoWindow: const InfoWindow(title: 'Your Location'),
+                )
+              },*/
             //_controller.complete(controller);
             //_controller.future.then((value){
             //value.setMapStyle(null);
@@ -149,8 +157,8 @@ bool _isLoading = true;
         left: 16,
         child: FloatingActionButton(
         backgroundColor: const Color.fromARGB(201, 238, 236, 236),
-        onPressed: () => mapController?.animateCamera(
-          CameraUpdate.newCameraPosition(_center as CameraPosition),
+        onPressed: () => mapController!.animateCamera(
+          CameraUpdate.newCameraPosition(CameraPosition(target: _center!, zoom: 16.0)),
         ),
         child: const Icon(Icons.center_focus_strong),
         ),)
