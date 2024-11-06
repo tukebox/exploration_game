@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_maps_flutter: ^2.9.0
   geolocator: ^13.0.1
+  flutter_settings_screens: ^0.3.4
 
 dev_dependencies:
   flutter_test:
@@ -57,7 +58,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/MapPieni2.png
-    - assets/map_styles/map_style1.json
+    - assets/map_styles/map_style_RDR2.json
+    - assets/map_styles/map_style_dark.json
+    - assets/map_styles/map_style_standard.json
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

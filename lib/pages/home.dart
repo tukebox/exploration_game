@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/mapview.dart';
 import 'package:flutter_application_1/pages/home.dart';
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
- void main() {
-  runApp(Home());
+//  Future<void> main() async {
+//   await Settings.init(cacheProvider: SharePreferenceCache());
+//   Settings.init();
+//   runApp(Home());
 
 
- }
+//  }
 
  class Home extends StatelessWidget {
   const Home({super.key});

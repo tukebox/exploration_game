@@ -18,9 +18,6 @@ late String _mapStyleString;
 
 
 class mapview extends StatefulWidget {
-  mapview({super.key});
-
-  
 
   @override
   State<mapview> createState() => _mapviewState();
@@ -33,6 +30,8 @@ class _mapviewState extends State<mapview> {
 LatLng? _center;
 Position? _currentPosition;
 bool _isLoading = true;
+static double get _circleRadius => 100.0;
+Offset? _circleOffset; //This will hold the screen position for the circle
 
 /*@override
   void initState() {
@@ -42,7 +41,7 @@ bool _isLoading = true;
 
   @override
   void initState() {
-    rootBundle.loadString('assets/map_styles/map_style1.json').then((string){
+    rootBundle.loadString('assets/map_styles/map_style_RDR2.json').then((string){
       _mapStyleString = string;
     });
     super.initState();
@@ -52,12 +51,33 @@ bool _isLoading = true;
    void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     mapController?.setMapStyle(_mapStyleString);
+    _updateCirclePosition();
     //initState();
    // _controller.complete(controller);
    // _controller.future.then((value){
    //   value.setMapStyle(_mapStyleString);
    // });
     
+  }
+
+  // Move the camera to the user's location
+  void _moveCameraToUserLocation() {
+    if (mapController != null && _currentPosition != null) {
+      mapController!.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+        ),
+      );
+    }
+  }
+
+  // Get user's current location
+  void _getCurrentLocation() async {
+    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    setState(() {
+      _currentPosition = position;
+      _moveCameraToUserLocation();
+    });
   }
 
   getLocation() async {
@@ -88,28 +108,22 @@ bool _isLoading = true;
         });
   }
 
-    //double lat = _currentPosition.latitude;
-    //double long = _currentPosition.longitude;
 
-    //LatLng location = LatLng(lat, long);
+// Convert LatLng to screen coordinates using GoogleMapController
+  Future<void> _updateCirclePosition() async {
+    if (_controller != null && _currentPosition != null) {
+      LatLng userLatLng = LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
 
-    //setState(() {
-   //   _currentPosition = location;
-   //   _isLoading = false;
-   // });
- // }
+      // Convert LatLng to Screen Coordinate (x, y) using the map controller
+      ScreenCoordinate screenCoordinate = await mapController!.getScreenCoordinate(userLatLng);
 
-  //void dispose(){
-   // mapController.dispose();
-   // super.dispose();
-  //}
-   //const _initialCameraPosition = CameraPosition(
-    //target: LatLng(65.834359, 24.180486),
-    //zoom: 13,
-   // );
-    
-    
-  //final LatLng _center = const LatLng(-33.86, 151.20);
+      setState(() {
+        // Update the circle's offset to match the user's screen position
+        _circleOffset = Offset(screenCoordinate.x.toDouble(), screenCoordinate.y.toDouble());
+      });
+    }
+  }
+
  
 
   @override
@@ -138,6 +152,10 @@ bool _isLoading = true;
               ),
               myLocationButtonEnabled: true,
               myLocationEnabled: true,
+              onCameraMove: (CameraPosition position) {
+                // Update the circle position when the camera moves
+                _updateCirclePosition();
+              },
               /*markers: {
                 Marker(markerId: const MarkerId('user_location'),
                 position: _center!,
@@ -150,23 +168,81 @@ bool _isLoading = true;
             //value.setMapStyle(_mapStyleString);
            // }
           ),
-                  
+          
+          if (_circleOffset != null) ...[
+            
+            IgnorePointer(
+            ignoring: true,
+            child: CustomPaint(
+              size: MediaQuery.of(context).size,
+              painter: CircleRevealPainter(
+                //center: Offset(
+                  //MediaQuery.of(context).size.width / 2, // Center it on the screen horizontally
+                  //MediaQuery.of(context).size.height / 2, // Center it vertically for now (can be adjusted)
+                  center: _circleOffset!,
+                  radius: _circleRadius,
+                ),
+                //radius: _circleRadius,
+              ),
+                
+            ),
+            
+            
+          ],  
                   //style: _mapStyleString
-      Positioned(
-        bottom: 16,
-        left: 16,
-        child: FloatingActionButton(
-        backgroundColor: const Color.fromARGB(201, 238, 236, 236),
-        onPressed: () => mapController!.animateCamera(
-          CameraUpdate.newCameraPosition(CameraPosition(target: _center!, zoom: 16.0)),
-        ),
-        child: const Icon(Icons.center_focus_strong),
-        ),)
+      // Positioned(
+      //   bottom: 16,
+      //   left: 16,
+      //   child: FloatingActionButton(
+      //   backgroundColor: const Color.fromARGB(201, 238, 236, 236),
+      //   onPressed: () => mapController!.animateCamera(
+      //     CameraUpdate.newCameraPosition(CameraPosition(target: _center!, zoom: 16.0)),
+      //   ),
+      //   child: const Icon(Icons.center_focus_strong),
+      //   ),
+      //   ),
         ],
-      )
+      ),
       
-      
-    );
+      );
 
+  }
+}
+
+// Custom Painter to create the circular reveal effect
+class CircleRevealPainter extends CustomPainter {
+  final Offset center;
+  final double radius;
+
+  CircleRevealPainter({required this.center, required this.radius});
+
+
+
+@override
+  void paint(Canvas canvas, Size size) {
+    // Paint greyPaint = Paint()..color = Colors.grey.withOpacity(0.9);
+    // Paint clearPaint = Paint()
+    //   ..blendMode = BlendMode.clear; // This will "cut out" the circle from the overlay
+    Paint greyPaint = Paint()..color = Colors.grey.withOpacity(0.7);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), greyPaint);
+
+
+    // canvas.drawRect(
+    //   Rect.fromLTWH(0, 0, size.width, size.height),
+    //   greyPaint,
+    // );
+
+    // Transparent circle
+    Paint clearPaint = Paint()..blendMode = BlendMode.clear;
+    canvas.drawCircle(center, radius, clearPaint);
+     
+
+    // Draw the transparent circle that reveals the map underneath
+    //canvas.drawCircle(center, radius, clearPaint);
+  }
+
+  @override
+  bool shouldRepaint(CircleRevealPainter oldDelegate) {
+    return oldDelegate.center != center || oldDelegate.radius != radius;
   }
 }
